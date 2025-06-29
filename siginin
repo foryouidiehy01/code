@@ -1,71 +1,90 @@
-// let users = [{
-//     id: 1,
-//     username: "Thanh Nha",
-//     email: "nha@gmail.com",
-//     password: 123456,
-//     status: true,
-// }]
-let users = JSON.parse(localStorage.getItem("users")) || []
+// Lấy dữ liệu user từ localStorage
+let users = JSON.parse(localStorage.getItem("users")) || [];
+console.log("Sign-in", users);
 
-// Lay thong tin dang ky nguoi dung 
-// B1: Truy van the form va gan su kien 
-let form = document.getElementById("main-form")
+let form = document.getElementById("main-form");
+
 form.addEventListener("submit", function (e) {
-    e.preventDefault() // Ngan reload lai trang 
-    // B2: Truy van cac the input 
-    let email = document.getElementById("email").value
-    let username = document.getElementById("username").value
-    let password = document.getElementById("password").value
-    // console.log(email, username, password);
-    //B3: Truy van cac the thong bao loi 
-    let emailError = document.getElementById("emailError")
-    let usernameError = document.getElementById("usernameError")
-    let passwordError = document.getElementById("passwordError")
+  e.preventDefault();
 
-    // Regex 
-    // regex.test(string) - test() la phuong thu mac dinh cua Regex trong Javascript
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const usernameRegex = /^[a-zA-Z0-9_]{4,16}$/;
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
-    // console.log(emailRegex.test(email)); - true/false
-    // B4: Reset lai thong bao loi
-    emailError.innerText = ''
-    usernameError.innerText = ''
-    passwordError.innerText = ''
-    // B5: Validate du lieu 
-    let isValid = true;
-    if (!emailRegex.test(email)) {
-        emailError.innerText = 'Email không hợp lệ'
-        isValid = false
-    }
-    if (!usernameRegex.test(username)) {
-        usernameError.innerText = 'UserName không hợp lệ'
-        isValid = false
-    }
-    if (!passwordRegex.test(password)) {
-        passwordError.innerText = 'Password không hợp lệ'
-        isValid = false
-    }
-    if (isValid) {
-        // alert("Dang ky thanh cong")
-        // - Khoi tao doi tuong moi tu thong tin nguoi dung nhap
-        let newUser = {
-            // id: Date.now(), // tinh tu diem khoi - 1/1/1970 => ms
-            id: users.length + 1,
-            // Lay id cua phan tu cuoi cung + 1 => lieu co loi khong
-            username: username,
-            email: email,
-            password: password,
-            status: true,
-        }
-        // - Them doi tuong moi vao trong mang users 
-        users.push(newUser)
-        // - Cap nhat mang user len localStorage 
-        localStorage.setItem("users", JSON.stringify(users))
-        // - Chuyen sang trang dang ky 
-        alert('🎉 Đăng ký thành công!');
-        window.location.href = "http://127.0.0.1:5500/pages/signin.html"
-    }
-    
+  let email = document.getElementById("email").value.trim();
+  let password = document.getElementById("password").value.trim();
 
-})
+  let errors = [];
+
+  if (email === '') {
+    errors.push("Email không được bỏ trống");
+  }
+
+  if (password === '') {
+    errors.push("Mật khẩu không được bỏ trống");
+  }
+
+  if (errors.length > 0) {
+    showAlert({
+      type: 'error',
+      title: 'Error',
+      messages: errors
+    });
+    return;
+  }
+
+  // Kiểm tra đăng nhập
+  let foundUser = users.find(user => user.email === email && user.password === password);
+
+  if (!foundUser) {
+    showAlert({
+      type: 'error',
+      title: 'Error',
+      messages: 'Email hoặc mật khẩu không đúng!'
+    });
+  } else {
+    showAlert({
+      type: 'success',
+      messages: 'Đăng nhập thành công'
+    });
+
+    setTimeout(() => {
+      window.location.href = "http://127.0.0.1:5500/pages/home.html";
+    }, 1500);
+  }
+});
+
+// Hàm hiển thị thông báo đẹp (hug alert)
+function showAlert({ type = 'success', title = '', messages = [] }) {
+  const containerId = 'custom-alert-container';
+  let container = document.getElementById(containerId);
+
+  if (!container) {
+    container = document.createElement('div');
+    container.id = containerId;
+    document.body.appendChild(container);
+  }
+
+  const alert = document.createElement('div');
+  alert.className = `alert-box ${type}`;
+
+  const icon = type === 'success' ? '✅' : '⛔';
+  const messageHtml = Array.isArray(messages)
+    ? messages.map(m => `<div>${m}</div>`).join('')
+    : `<div>${messages}</div>`;
+
+  alert.innerHTML = `
+    <div class="icon">${icon}</div>
+    <div class="content">
+      ${title ? `<div class="title">${title}</div>` : ''}
+      <div class="message">${messageHtml}</div>
+    </div>
+    <button class="close">&times;</button>
+  `;
+
+  alert.querySelector('.close').addEventListener('click', () => {
+    alert.remove();
+  });
+
+  container.appendChild(alert);
+
+  setTimeout(() => {
+    alert.remove();
+  }, 5000);
+}
